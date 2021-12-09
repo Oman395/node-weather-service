@@ -27,7 +27,7 @@ import https from 'https';
  * @param {string} options.cursor Pagination cursor. Don't ask me what it does b/c IDK either
  */
 export function getAlerts(options = {}) {
-    return new Promise((re, rj) => {
+    return new Promise((rs, rj) => {
         let url = '/alerts?';
         if (options.start) url += `start=${options.start}&`;
         if (options.end) url += `end=${options.end}&`;
@@ -56,7 +56,10 @@ export function getAlerts(options = {}) {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => re(JSON.parse(data)));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         });
     });
 }
@@ -76,7 +79,10 @@ export function getGlossary() {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => rs(JSON.parse(data)));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         });
     })
 }
@@ -110,6 +116,7 @@ export function getGridPoint(wfo, x, y, options = {}) {
                     let data = '';
                     res.on('data', chunk => data += chunk);
                     res.on('end', () => {
+                        if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
                         const gridpoint = JSON.parse(data);
                         x = parseInt(gridpoint.properties.gridX);
                         y = parseInt(gridpoint.properties.gridY);
@@ -141,7 +148,10 @@ export function getGridPoint(wfo, x, y, options = {}) {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => rs(JSON.parse(data)));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         });
     });
 }
@@ -175,7 +185,10 @@ export function getStations(options = {}) {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => rs(data));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         }).end();
     });
 }
@@ -204,7 +217,10 @@ export function getOffices(options) {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => rs(data));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         }).end();
     });
 }
@@ -227,7 +243,10 @@ export function getPoint(options = {}) {
         https.get(o, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
-            res.on('end', () => rs(data));
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
         }).end();
     });
 }
