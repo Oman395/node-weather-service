@@ -46,4 +46,25 @@ import noaa from './index.js';
     } catch (e) {
         console.log(`POINT: FAIL - ERROR: ${e}`);
     }
+    try {
+        let radar = await noaa.getRadar({ stationid: 'K12N', stations: true });
+        if (radar) console.log(`RADAR: OK`);
+        else console.log(`RADAR: FAIL - RESPONSE: ${radar}`);
+    } catch (e) {
+        console.log(`RADAR: FAIL - ERROR: ${e}`);
+    }
+    try {
+        let products = await noaa.getProducts({ locations: true, types: true, typeid: 'ABV', locationid: 'OKX' });
+        if (products) console.log(`PRODUCTS: OK`);
+        else console.log(`PRODUCTS: FAIL - RESPONSE: ${products}`);
+    } catch (e) {
+        console.log(`PRODUCTS: FAIL - ERROR: ${e}`);
+    }
+    try {
+        let zones = await noaa.getZones({ type: 'land', zoneid: 'ANZ338', forecast: true });
+        if (zones) console.log(`ZONES: OK`);
+        else console.log(`ZONES: FAIL - RESPONSE: ${zones}`);
+    } catch (e) {
+        console.log(`ZONES: FAIL - ERROR: ${e}`);
+    }
 })();

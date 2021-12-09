@@ -4,6 +4,9 @@ import https from 'https';
 // a url that also pulls 301 errors. so now I need to go to https://www.weather.gov/documentation/services-web-api.
 // yay.
 
+// Anyway, this is just a simple API wrapper for api.weather.gov. Not much honestly, might add some more APIs to
+// get a nice full on weather API in the future; for now, it's just a wrapper for the NWS api.
+
 /**
  * Get NOAA weather alerts
  * Options are mutually exclusive, with the exception that zone, area, and region are all dependent on
@@ -124,7 +127,7 @@ export function getGridPoint(wfo, x, y, options = {}) {
                         url = `/gridpoints/${wfo}/${x},${y}`;
                         r();
                     });
-                }).end();
+                })
             });
         }
         if (options.forecast) {
@@ -189,7 +192,7 @@ export function getStations(options = {}) {
                 if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
                 rs(JSON.parse(data))
             });
-        }).end();
+        })
     });
 }
 /**
@@ -221,7 +224,7 @@ export function getOffices(options) {
                 if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
                 rs(JSON.parse(data))
             });
-        }).end();
+        })
     });
 }
 /**
@@ -247,14 +250,160 @@ export function getPoint(options = {}) {
                 if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
                 rs(JSON.parse(data))
             });
-        }).end();
+        })
     });
 }
+/**
+ * Get radar data from NWS
+ * @param {object} options 
+ * @param {boolean} options.servers whether to get radar server data
+ * @param {string} options.serverid radar server id to get data for (needs servers)
+ * @param {boolean} options.stations whether to get radar station data
+ * @param {string} options.stationid station ID to get stations data from (needs stations or profilers)
+ * @param {boolean} options.alarms whether to get alarms from station (needs stationid)
+ * @param {string} options.queuehost whether to get queue data, and host for that
+ * @param {boolean} options.profilers whether to get profilers from station (needs stationid)
+ * @param {string} options.reportingHost I don't know what this is, but the site says 'Show RDA and latency info from specific reporting host'
+ */
+export function getRadar(options = {}) {// Currently pulling 503 errors so
+    // not a lot of testing has happened, proceed with caution.
+    return new Promise((rs, rj) => {
+        let url = '/radar';
+        if (options.servers) {
+            url += '/servers';
+            if (options.serverid) url += `/${options.serverid}`;
+        } else if (options.stations) {
+            url += '/stations';
+            if (options.stationid) url += `/${options.stationid}`;
+            if (options.alarms && options.stationid) url += '/alarms';
+        } else if (options.queuehost) {
+            url += `/queuehost/${options.queuehost}`;
+        } else if (options.profilers) {
+            url += `/profilers/${options.stationid}`;
+        } else {
+            rj('Not enough options provided');
+        }
+        const o = {
+            hostname: 'api.weather.gov',
+            path: url,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux Mint/18.3; x86_64) Gecko Firefox/46.0.4'  // Linux mint, x64, node lts v16
+            }
+        }
+        https.get(o, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
+        });
+    });
+}
+/**
+ * Get products from NWS
+ * @param {object} options
+ * @param {boolean} options.locations Get a list of valid locations
+ * @param {boolean} options.types Get a list of valid product types and codes
+ * @param {string} options.typeid Product type id to get data for
+ * @param {string} options.locationid Location id to get data for
+ */
+export function getProducts(options = {}) {
+    return new Promise((rs, rj) => {
+        let url = '/products';
+        if (options.types && options.typeid) {
+            url += '/types';
+            if (options.typeid) {
+                url += `/${options.typeid}`;
+                if (options.locations) url += '/locations';
+                if (options.locationid) url += `/${options.locationid}`;
+            }
+        } else if (options.locations) {
+            url += '/locations';
+            if (options.locationid) {
+                url += `/${options.locationid}`;
+                if (options.types) url += '/types';
+            }
+        }
+        const o = {
+            hostname: 'api.weather.gov',
+            path: url,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux Mint/18.3; x86_64) Gecko Firefox/46.0.4'  // Linux mint, x64, node lts v16
+            }
+        }
+        https.get(o, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
+        })
+    });
+}
+/**
+ * Get zone data from NWS
+ * @param {object} options 
+ * @param {string} options.type whether to use type
+ * @param {boolean} options.forecast whether to get forecast
+ * @param {boolean} options.observations whether to get observations. Dependent on both forecast and zoneid.
+ * @param {boolean} options.stations whether to get stations. Dependant on both forecast and zoneid.
+ * @param {string} options.zoneid zone id to get data for
+ * @param {number} options.lattitude latitude of zone. needs point
+ * @param {number} options.longitude longitude of zone. neeeds point
+ * @param {boolean} options.point whether to get point. needs lattitude and longitude
+ */
+export function getZones(options = {}) { // This one is pulling error 500 and I can't figure out why.
+    // Using the portal at https://www.weather.gov/documentation/services-web-api#/default/zone_obs, it's not even
+    // working, so IDEK what's wrong.
+    // I might just have a bad zone id?
+    // In any case, lat/lon works, so I'm going to use that.
+    return new Promise((rs, rj) => {
+        let url = '/zones';
+        if (options.type) {
+            url += '/type';
+            if (options.zoneid) {
+                url += `/${options.zoneid}`;
+                if (options.forecast) url += '/forecast';
+            }
+        } else if (options.forecast && options.zoneid && options.observations || options.stations) {
+            url += `/forecast/${options.zoneid}`;
+            if (options.observations) url += '/observations';
+            else url += '/stations';
+        } else if (options.point && options.lattitude && options.longitude) {
+            url += `?point=${options.lattitude},${options.longitude}`;
+        }
+        const o = {
+            hostname: 'api.weather.gov',
+            path: url,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux Mint/18.3; x86_64) Gecko Firefox/46.0.4'  // Linux mint, x64, node lts v16
+            }
+        }
+        console.log(url);
+        https.get(o, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode != 200) rj('Non 200 status code: ' + res.statusCode);
+                rs(JSON.parse(data))
+            });
+        });
+    });
+}
+
 export default {
     getAlerts,
     getGlossary,
     getGridPoint,
     getStations,
     getOffices,
-    getPoint
+    getPoint,
+    getRadar,
+    getProducts,
+    getZones
 }
