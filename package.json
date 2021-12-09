@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "node-weather-service",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Node.js wrapper for the api.weather.gov api.",
   "main": "index.js",
   "scripts": {
